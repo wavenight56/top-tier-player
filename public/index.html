@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#050912">
+  <title>Top Tier Player</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/logo.css">
+</head>
+<body>
+  <div id="toast" role="status"></div>
+  <section id="login" class="screen centered">
+    <form id="loginForm" class="panel auth-card">
+      <div class="brand"><img src="/top-tier-logo.png" alt="Top Tier Player"></div>
+      <h1>Your entertainment. Your way.</h1>
+      <p class="muted">Connect a licensed Xtream or M3U provider.</p>
+      <div class="mode-switch"><button type="button" class="mode active" data-mode="xtream">XTREAM</button><button type="button" class="mode" data-mode="m3u">M3U</button></div>
+      <div id="xtreamFields">
+        <label>Server URL<input id="serverUrl" inputmode="url" placeholder="https://your-domain.com:port"></label>
+        <label>Username<input id="username" autocomplete="username"></label>
+        <label>Password<input id="password" type="password" autocomplete="current-password"></label>
+      </div>
+      <div id="m3uFields" hidden>
+        <label>Playlist URL<input id="m3uUrl" inputmode="url" placeholder="https://provider.com/playlist.m3u"></label>
+        <label>EPG URL <span class="muted">(optional)</span><input id="epgUrl" inputmode="url" placeholder="https://provider.com/guide.xml"></label>
+      </div>
+      <button class="primary" type="submit">CONNECT</button>
+      <p class="legal">Top Tier Player does not include channels or content.</p>
+    </form>
+  </section>
+
+  <section id="app" class="screen" hidden>
+    <aside class="sidebar">
+      <div class="brand mini"><img src="/top-tier-logo.png" alt="Top Tier Player"></div>
+      <nav id="nav">
+        <button data-page="home" class="active">⌂ <span>Home</span></button>
+        <button data-page="live">● <span>Live TV</span></button>
+        <button data-page="movies">▶ <span>Movies</span></button>
+        <button data-page="series">▤ <span>Series</span></button>
+        <button data-page="catchup">↶ <span>Catch Up</span></button>
+        <button data-page="favorites">★ <span>Favorites</span></button>
+        <button data-page="settings">⚙ <span>Settings</span></button>
+      </nav>
+    </aside>
+    <main>
+      <header><div><h2 id="pageTitle">Home</h2><p id="accountStatus" class="muted"></p></div><button id="lockButton" class="icon-button" title="Parental lock">🔒</button></header>
+      <div id="content" class="content"></div>
+    </main>
+  </section>
+
+  <dialog id="playerDialog">
+    <div class="player-head"><strong id="nowPlaying">Now Playing</strong><button id="closePlayer">✕</button></div>
+    <video id="video" controls autoplay playsinline></video>
+    <p id="playerMessage" class="muted"></p>
+  </dialog>
+
+  <dialog id="pinDialog" class="small-dialog">
+    <form id="pinForm" method="dialog">
+      <h3>Parental PIN</h3><input id="pinInput" type="password" inputmode="numeric" maxlength="6" placeholder="Enter PIN">
+      <div class="dialog-actions"><button value="cancel">Cancel</button><button class="primary" value="default">Unlock</button></div>
+    </form>
+  </dialog>
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+.brand { justify-content: center; }
+.brand img { display: block; width: min(250px, 75%); height: auto; filter: drop-shadow(0 0 16px #159eff66); }
+.brand.mini { padding: 0 6px 22px; }
+.brand.mini img { width: 155px; }
+@media (max-width: 760px) { .brand.mini { display: none; } }

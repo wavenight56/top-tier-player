@@ -1,0 +1,11 @@
+{
+  "name": "top-tier-player",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Top Tier IPTV Player for licensed Xtream and M3U sources",
+  "scripts": {
+    "start": "node server.js",
+    "check": "node --check server.js && node --check public/app.js"
+  },
+  "engines": { "node": ">=18" }
+}
