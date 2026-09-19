@@ -26,7 +26,9 @@ jobs:
           java-version: '17'
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
-      - name: Build signed sideload APK
+        with:
+          gradle-version: '8.10.2'
+      - name: Build sideload APK
         run: gradle -p android assembleDebug --no-daemon
       - name: Publish APK
         uses: actions/upload-artifact@v4
