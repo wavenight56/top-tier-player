@@ -48,7 +48,12 @@ public class MainActivity extends Activity {
       @Override public boolean shouldOverrideUrlLoading(WebView view, String url) { return !HOST.equals(Uri.parse(url).getHost()); }
       @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest req) {
         Uri uri=req.getUrl();
-        if (!HOST.equals(uri.getHost())) return error(403,"External pages cannot open inside the player.");
+        // The app itself stays local.  Provider-hosted artwork is allowed as a
+        // subresource so channel logos can render in the guide.
+        if (!HOST.equals(uri.getHost())) {
+          if (req.isForMainFrame()) return error(403,"External pages cannot open inside the player.");
+          return null;
+        }
         if (!"GET".equals(req.getMethod())) return error(405,"Unsupported request.");
         try {
           if ("/api/proxy".equals(uri.getPath())) return provider(uri.getQueryParameter("url"));
@@ -58,7 +63,7 @@ public class MainActivity extends Activity {
           String mime=path.endsWith(".js")?"application/javascript":path.endsWith(".css")?"text/css":path.endsWith(".png")?"image/png":path.endsWith(".webmanifest")?"application/manifest+json":"text/html";
           Map<String,String> headers=new HashMap<>();
           headers.put("Cache-Control","no-store");
-          headers.put("Content-Security-Policy","default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'none'");
+          headers.put("Content-Security-Policy","default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: http: https:; connect-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'none'");
           return new WebResourceResponse(mime,"UTF-8",200,"OK",headers,getAssets().open(path.substring(1)));
         } catch (Exception e) { return error(502,"Could not connect. Check the server address and internet connection, then retry."); }
       }
