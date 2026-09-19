@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-fire-tv-apk:
@@ -30,7 +30,14 @@ jobs:
           gradle-version: '8.10.2'
       - name: Build sideload APK
         run: gradle -p android assembleDebug --no-daemon
-      - name: Publish APK
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v0.7.0
+          name: Top Tier Player v0.7.0
+          body: Fire TV and Android TV release with the updated TV guide, favorites, playlist refresh, and persistent sign-in.
+          files: android/app/build/outputs/apk/debug/app-debug.apk
+      - name: Publish APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: Top-Tier-Player-FireTV-AndroidTV-v0.7.0
