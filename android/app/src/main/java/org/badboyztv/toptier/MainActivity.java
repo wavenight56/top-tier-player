@@ -32,6 +32,14 @@ public class MainActivity extends Activity {
     super.onCreate(state);
     getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
     root = new FrameLayout(this);
+    createPlayerWebView();
+    root.addView(player,new FrameLayout.LayoutParams(-1,-1));
+    setContentView(root);
+    player.loadUrl("https://"+HOST+"/");
+  }
+
+  /** Keeps a provider or WebView renderer failure from closing the TV app. */
+  private void createPlayerWebView() {
     player = new WebView(this);
     player.setBackgroundColor(Color.rgb(5,9,18));
     WebSettings settings = player.getSettings();
@@ -39,6 +47,7 @@ public class MainActivity extends Activity {
     settings.setDomStorageEnabled(true);
     settings.setAllowFileAccess(false);
     settings.setAllowContentAccess(false);
+    settings.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
     settings.setMediaPlaybackRequiresUserGesture(true);
     settings.setUserAgentString(settings.getUserAgentString()+" TopTierPlayer/0.6");
     player.setWebChromeClient(new WebChromeClient());
@@ -67,10 +76,18 @@ public class MainActivity extends Activity {
           return new WebResourceResponse(mime,"UTF-8",200,"OK",headers,getAssets().open(path.substring(1)));
         } catch (Exception e) { return error(502,"Could not connect. Check the server address and internet connection, then retry."); }
       }
+      @Override public boolean onRenderProcessGone(WebView view, RenderProcessGoneDetail detail) {
+        // WebView can terminate its own renderer on low-memory Fire TV devices.
+        // Recreate the local shell instead of allowing Android to close the player.
+        root.removeView(view);
+        view.destroy();
+        createPlayerWebView();
+        root.addView(player, 0, new FrameLayout.LayoutParams(-1,-1));
+        player.loadUrl("https://"+HOST+"/");
+        Toast.makeText(MainActivity.this,"Player recovered. Please try the channel again.",Toast.LENGTH_LONG).show();
+        return true;
+      }
     });
-    root.addView(player,new FrameLayout.LayoutParams(-1,-1));
-    setContentView(root);
-    player.loadUrl("https://"+HOST+"/");
   }
 
   private URL remote(String raw) throws Exception {
@@ -105,6 +122,7 @@ public class MainActivity extends Activity {
     }
   }
   private void openVideo(String url,String title) {
+    try {
     closeVideo();
     FrameLayout layout=new FrameLayout(this);
     layout.setBackgroundColor(Color.BLACK);
@@ -134,6 +152,10 @@ public class MainActivity extends Activity {
     exo.prepare();
     exo.play();
     view.requestFocus();
+    } catch (Exception e) {
+      closeVideo();
+      Toast.makeText(this,"This stream could not start. Please try another channel.",Toast.LENGTH_LONG).show();
+    }
   }
   private void closeVideo() {
     if(exo!=null){exo.release();exo=null;}
@@ -145,7 +167,7 @@ public class MainActivity extends Activity {
     if(playback!=null){closeVideo();return;}
     player.evaluateJavascript("window.topTierBack ? window.topTierBack() : false", result->{if(!"true".equals(result))MainActivity.super.onBackPressed();});
   }
-  @Override protected void onPause(){super.onPause();if(exo!=null)exo.pause();player.onPause();}
+  @Override protected void onPause(){if(exo!=null)exo.pause();if(player!=null)player.onPause();super.onPause();}
   @Override protected void onResume(){super.onResume();if(player!=null)player.onResume();}
   @Override protected void onDestroy(){closeVideo();if(player!=null){player.removeJavascriptInterface("TopTierNative");player.destroy();}super.onDestroy();}
 }
