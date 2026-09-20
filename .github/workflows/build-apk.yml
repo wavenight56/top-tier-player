@@ -33,14 +33,14 @@ jobs:
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v0.7.4
-          name: Top Tier Player v0.7.4
-          body: "Fire TV and Android TV guide fix: full-screen guide, left-side category rail, separate login screen, fast loading, and stable playback."
+          tag_name: v0.7.5
+          name: Top Tier Player v0.7.5
+          body: "Fire TV and Android TV update: clear updating-playlist status, TV-first navigation, full-screen guide, persistent login, and stable category-by-category loading."
           files: android/app/build/outputs/apk/debug/app-debug.apk
       - name: Publish APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Top-Tier-Player-FireTV-AndroidTV-v0.7.4
+          name: Top-Tier-Player-FireTV-AndroidTV-v0.7.5
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
