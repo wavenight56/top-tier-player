@@ -28,6 +28,7 @@
         <label>EPG URL <span class="muted">(optional)</span><input id="epgUrl" inputmode="url" placeholder="https://provider.com/guide.xml"></label>
       </div>
       <button class="primary" type="submit">CONNECT</button>
+      <button class="secondary pair-button" id="pairButton" type="button">SCAN QR WITH YOUR PHONE</button>
       <p class="legal">Top Tier Player does not include channels or content.</p>
     </form>
   </section>
@@ -64,6 +65,11 @@
       <div class="dialog-actions"><button value="cancel">Cancel</button><button class="primary" value="default">Unlock</button></div>
     </form>
   </dialog>
+  <dialog id="pairDialog" class="pair-dialog">
+    <div class="pair-header"><div><h2>Connect with your phone</h2><p>Scan the QR code and enter your provider details on your phone.</p></div><button id="closePair" type="button" aria-label="Close">✕</button></div>
+    <div class="pair-body"><img id="pairQr" alt="Temporary pairing QR code"><div><strong id="pairStatus">Preparing secure pairing…</strong><p id="pairExpiry">The code expires in five minutes.</p><button id="restartPair" class="secondary" type="button" hidden>MAKE A NEW QR CODE</button></div></div>
+  </dialog>
   <script src="/app.js"></script>
+  <script src="/pairing.js"></script>
 </body>
 </html>
