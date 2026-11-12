@@ -72,7 +72,7 @@ public class MainActivity extends Activity {
           String mime=path.endsWith(".js")?"application/javascript":path.endsWith(".css")?"text/css":path.endsWith(".png")?"image/png":path.endsWith(".webmanifest")?"application/manifest+json":"text/html";
           Map<String,String> headers=new HashMap<>();
           headers.put("Cache-Control","no-store");
-          headers.put("Content-Security-Policy","default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: http: https:; connect-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'none'");
+          headers.put("Content-Security-Policy","default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: http: https:; connect-src 'self' https://top-tier-player.onrender.com; frame-src 'none'; object-src 'none'; base-uri 'none'");
           return new WebResourceResponse(mime,"UTF-8",200,"OK",headers,getAssets().open(path.substring(1)));
         } catch (Exception e) { return error(502,"Could not connect. Check the server address and internet connection, then retry."); }
       }
