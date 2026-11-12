@@ -2,6 +2,8 @@ const http = require('http');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
+const makeQr = require('qrcode-generator');
 const { URL } = require('url');
 
 const PORT = Number(process.env.PORT || 8080);
@@ -11,6 +13,49 @@ const MIME = {
   '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8',
   '.svg': 'image/svg+xml', '.png': 'image/png', '.webmanifest': 'application/manifest+json'
 };
+const PAIR_TTL_MS = 5 * 60 * 1000;
+const pairings = new Map();
+
+function json(res, status, value, extraHeaders = {}) {
+  res.writeHead(status, {
+    'content-type': 'application/json; charset=utf-8',
+    'cache-control': 'no-store',
+    'access-control-allow-origin': '*',
+    'access-control-allow-methods': 'GET, POST, OPTIONS',
+    'access-control-allow-headers': 'Content-Type, X-Pair-Token',
+    ...extraHeaders
+  });
+  res.end(status === 204 ? '' : JSON.stringify(value));
+}
+
+function cleanupPairings() {
+  const now = Date.now();
+  for (const [token, session] of pairings) if (session.expiresAt <= now) pairings.delete(token);
+}
+
+function readJson(req, limit = 8192) {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    req.setEncoding('utf8');
+    req.on('data', chunk => {
+      body += chunk;
+      if (body.length > limit) { reject(new Error('Request is too large')); req.destroy(); }
+    });
+    req.on('end', () => {
+      try { resolve(JSON.parse(body || '{}')); }
+      catch { reject(new Error('Invalid request body')); }
+    });
+    req.on('error', reject);
+  });
+}
+
+function validProfile(profile) {
+  if (!profile || !['xtream', 'm3u'].includes(profile.type)) return false;
+  const values = profile.type === 'xtream'
+    ? [profile.base, profile.username, profile.password]
+    : [profile.playlist];
+  return values.every(value => typeof value === 'string' && value.length > 0 && value.length <= 2048);
+}
 
 function send(res, status, body, type = 'text/plain; charset=utf-8') {
   if (res.headersSent || res.writableEnded) return;
@@ -70,6 +115,48 @@ function proxy(req, res, target, redirects = 0) {
 http.createServer((req, res) => {
   try {
     const requestUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+
+    if (requestUrl.pathname.startsWith('/api/pair/')) {
+      if (req.method === 'OPTIONS') return json(res, 204, {});
+
+      if (requestUrl.pathname === '/api/pair/new' && req.method === 'GET') {
+        cleanupPairings();
+        const token = crypto.randomBytes(32).toString('base64url');
+        const expiresAt = Date.now() + PAIR_TTL_MS;
+        pairings.set(token, { expiresAt, profile: null });
+        const origin = process.env.PUBLIC_ORIGIN || `${req.headers['x-forwarded-proto'] || 'https'}://${req.headers['x-forwarded-host'] || req.headers.host}`;
+        const pairUrl = `${origin}/pair.html#${token}`;
+        const qr = makeQr(0, 'M');
+        qr.addData(pairUrl);
+        qr.make();
+        return json(res, 200, { token, expiresAt, pairUrl, qrSvg: qr.createSvgTag(6, 8) });
+      }
+
+      if (requestUrl.pathname === '/api/pair/submit' && req.method === 'POST') {
+        return readJson(req).then(data => {
+          cleanupPairings();
+          const session = pairings.get(data.token);
+          if (!session) return json(res, 410, { error: 'This pairing code expired. Start again on the TV.' });
+          if (session.profile) return json(res, 409, { error: 'This pairing code has already been used.' });
+          if (!validProfile(data.profile)) return json(res, 400, { error: 'Enter valid provider details.' });
+          session.profile = data.profile;
+          return json(res, 200, { ok: true });
+        }).catch(error => json(res, 400, { error: error.message || 'Invalid request.' }));
+      }
+
+      if (requestUrl.pathname === '/api/pair/poll' && req.method === 'GET') {
+        cleanupPairings();
+        const token = req.headers['x-pair-token'];
+        const session = pairings.get(token);
+        if (!session) return json(res, 410, { status: 'expired' });
+        if (!session.profile) return json(res, 200, { status: 'waiting' });
+        const profile = session.profile;
+        pairings.delete(token);
+        return json(res, 200, { status: 'ready', profile });
+      }
+
+      return json(res, 404, { error: 'Pairing endpoint not found.' });
+    }
 
     if (requestUrl.pathname === '/api/health') {
       return send(res, 200, JSON.stringify({ ok: true, service: 'top-tier-player', version: '0.2.0' }), 'application/json');

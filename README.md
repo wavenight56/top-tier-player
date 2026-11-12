@@ -10,6 +10,8 @@ An installable black-and-blue IPTV player foundation for **licensed content only
 
 No content or provider credentials are included. Customers enter their own authorized connection details in the player.
 
+On a TV, customers can choose **Scan QR with your phone** on the sign-in screen. The QR opens a short-lived pairing form; provider details are held in server memory only until the TV receives them or the five-minute code expires.
+
 ## Deploy on Badboyztv.org
 
 Point `Badboyztv.org` to a Node-capable host and set `PORT` if the host requires it. For production, set `ALLOWED_STREAM_HOSTS` to a comma-separated list of approved provider hostnames. Example:
